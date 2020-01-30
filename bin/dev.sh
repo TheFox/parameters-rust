@@ -12,4 +12,6 @@ mkdir -p tmp
 export RUST_BACKTRACE=1
 export RUSTFLAGS=-Awarnings
 
+set -x
+
 cargo run -- $*
