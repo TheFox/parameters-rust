@@ -10,3 +10,9 @@ The project outlines as described in my blog post about [Open Source Software Co
 ## Similar projects
 
 - [Parameters written in C++](https://github.com/TheFox/parameters)
+
+## Dev
+
+```bash
+./bin/dev.sh -i ./.env.dist -o ./.env.dist.x -e production -n shopa -r SYMF_ -s @
+```
