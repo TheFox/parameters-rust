@@ -1,7 +1,7 @@
 [package]
 name = "parameters"
 description = "Automatic replace variables in configuration file templates from environment variables."
-version = "0.1.0-dev.2"
+version = "0.1.0-dev.3"
 license = "MIT"
 authors = ["Christian Mayer <christian@fox21.at>"]
 homepage = "https://github.com/TheFox/parameters-rust"
@@ -13,6 +13,7 @@ edition = "2018"
 default-run = "parameters"
 
 [dependencies]
+clap = "^2.33.0"
 
 [profile.release]
 panic = 'abort'
