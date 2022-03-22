@@ -1,3 +1,6 @@
-/target
+/target/
+/tmp/
 **/*.rs.bk
+.env
 .env.dist.*
+.env.production
