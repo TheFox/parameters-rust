@@ -19,4 +19,5 @@ TODO
 
 ```bash
 ./bin/dev.sh -i ./.env.dist -o ./.env.production -e production -n shopa -r SYMF_ -s @
+echo -n hello | ./bin/dev.sh -i - -o ./.env.production -e production -n shopa -r ^SYMF_ -s @
 ```

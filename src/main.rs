@@ -1,8 +1,11 @@
 
 use std::env::args;
-use std::process::exit;
 use std::fs::read_to_string;
+use std::io::stdin;
+use std::io::BufRead;
+use std::io::Result;
 use parameters_lib::app::App;
+use parameters_lib::parameters::Parameters;
 
 const APP_NAME: &'static str = env!("CARGO_PKG_NAME");
 const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -26,20 +29,20 @@ fn print_usage() {
     println!("");
     println!("Options:");
     println!("  -h|--help                       Show help.");
-    println!("  -i|--input <input_file>         Input path to template file. (required)");
+    println!("  -i|--input <input_file>         Input path to template file or '-' for STDIN. (required)");
     println!("  -o|--output <output_file>       Output file path. Default: STDOUT");
     println!("  -r|--regexp <regexp>            Search regular expression for environment variable names. (required)");
     println!("  -e|--env|--environment <name>   Name of the environment. For example: production");
     println!("  -n|--instance <name>               Name of the Instance. For example: SHOPA, or SHOPB.");
     println!("  -s|--search <string>            Search char for template variables. Default: @");
-    println!("  -q|--quiet                      Do not throw an error if there are variables missing being replaced.");
-    println!("  -H|--noheader                   Skip header.");
+    // TODO: --quiet
+    // println!("  -q|--quiet                      Do not throw an error if there are variables missing being replaced.");
+    // TODO: --noheader
+    // println!("  -H|--noheader                   Skip header.");
     println!("");
-
-    exit(0);
 }
 
-fn main() {
+fn main() -> Result<()> {
     print_app_info();
 
     #[cfg(debug_assertions)]
@@ -55,7 +58,7 @@ fn main() {
 
     if argc == 1 {
         print_usage();
-        exit(0);
+        return Ok(());
     }
 
     let mut app = App::new();
@@ -67,22 +70,22 @@ fn main() {
         }
         let arg = &args[index];
         let next = &args.get(index + 1);
+
+        #[cfg(debug_assertions)]
         println!("-> arg: #{} {:?}", index, arg);
 
         match arg.as_str() {
             "-h" | "--help" => {
                 print_usage();
-                exit(0);
+                return Ok(());
             },
             "-V" | "--version" => {
                 print_usage();
-                exit(0);
+                return Ok(());
             },
             "-i" | "--input" => {
                 if let Some(_next) = next {
-                    app.input_file_path = Some(read_to_string(_next)
-                        .expect("Cannot read file")
-                        .to_string());
+                    app.input_file_path = Some(_next.to_string());
                     skip_next = true;
                 }
             },
@@ -138,10 +141,40 @@ fn main() {
         println!("-> app.instance: {:?}", app.instance);
         println!("-> app.search: {:?}", app.search);
         println!("-> app.is_quiet: {:?}", app.is_quiet);
+        println!("-> app.no_header: {:?}", app.no_header);
     }
+
+    let input: String = {
+        match app.input_file_path {
+            Some(_input_file_path) => {
+                // println!("-> _input_file_path: {}", _input_file_path);
+                if _input_file_path == "-" {
+                    println!("-> use stdin for input");
+                    let mut buffer = String::new();
+                    let stdin = stdin();
+                    let mut handle = stdin.lock();
+                    handle.read_line(&mut buffer)?;
+                    buffer
+                } else {
+                    read_to_string(_input_file_path)
+                        .expect("Cannot read file")
+                }
+            },
+            None => panic!("--input argument is required."),
+        }
+    };
+
+    if app.regexp.is_none() {
+        panic!("--regexp argument is required.");
+    }
+
+    let parameters = Parameters::new(app.regexp, app.env_name, app.instance, app.search);
+    parameters.process_input(&input);
 
     #[cfg(debug_assertions)]
     println!("-> end");
+
+    Ok(())
 }
 
 #[cfg(test)]
