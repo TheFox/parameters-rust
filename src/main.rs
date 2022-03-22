@@ -32,8 +32,8 @@ fn print_usage() {
     println!("  -i|--input <input_file>         Input path to template file or '-' for STDIN. (required)");
     println!("  -o|--output <output_file>       Output file path. Default: STDOUT");
     println!("  -r|--regexp <regexp>            Search regular expression for environment variable names. (required)");
-    println!("  -e|--env|--environment <name>   Name of the environment. For example: production");
-    println!("  -n|--instance <name>               Name of the Instance. For example: SHOPA, or SHOPB.");
+    println!("  -e|--env|--environment <name>   Name of the Environment. For example: production");
+    println!("  -n|--instance <name>            Name of the Instance. For example: instance1, or instance2.");
     println!("  -s|--search <string>            Search char for template variables. Default: @");
     // TODO: --quiet
     // println!("  -q|--quiet                      Do not throw an error if there are variables missing being replaced.");
@@ -103,7 +103,9 @@ fn main() -> Result<()> {
             },
             "-e" | "--env" | "--environment" => {
                 if let Some(_next) = next {
-                    app.env_name = Some(_next.to_string());
+                    app.env_name = Some(_next
+                        .to_string()
+                        .to_uppercase());
                     skip_next = true;
                 }
             },
@@ -117,7 +119,7 @@ fn main() -> Result<()> {
             },
             "-s" | "--search" => {
                 if let Some(_next) = next {
-                    app.search = Some(_next.to_string());
+                    app.search = _next.to_string();
                     skip_next = true;
                 }
             },
@@ -168,9 +170,9 @@ fn main() -> Result<()> {
         panic!("--regexp argument is required.");
     }
 
-    let parameters = Parameters::new(app.regexp, app.env_name, app.instance, app.search);
+    let parameters = Parameters::new(app.regexp.unwrap(), app.env_name, app.instance, app.search);
     parameters.process_input(&input);
-
+    
     #[cfg(debug_assertions)]
     println!("-> end");
 

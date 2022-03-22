@@ -9,4 +9,7 @@ documentation = "https://github.com/TheFox/parameters-rust"
 repository = "https://github.com/TheFox/parameters-rust"
 keywords = ["env", "variables"]
 categories = ["cli", "configuration", "lib"]
-edition = "2021"
+edition = "2018"
+
+[dependencies]
+regex = "1"
