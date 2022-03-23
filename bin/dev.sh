@@ -6,9 +6,9 @@ export RUSTFLAGS=-Awarnings
 export APP_BUILD_AT=$(date)
 export SYMF_DB_USER=user1
 export SYMF_DB_PASS=password1
-export SYMF_PRODUCTION_DB_PASS=password1
-export SYMF_PRODUCTION_INSTANCE1_DB_PASS=password1
-export SYMF_PRODUCTION_INSTANCE2_DB_PASS=password1
+export SYMF_DB_PASS_PRODUCTION=password1
+export SYMF_DB_PASS_PRODUCTION_INSTANCE1=password1
+export SYMF_DB_PASS_PRODUCTION_INSTANCE2=password2
 
 which cargo &> /dev/null || { echo 'ERROR: cargo not found in PATH'; exit 1; }
 

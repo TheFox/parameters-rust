@@ -12,4 +12,4 @@ categories = ["cli", "configuration", "lib"]
 edition = "2018"
 
 [dependencies]
-regex = "1"
+regex = "^1.5.0"
