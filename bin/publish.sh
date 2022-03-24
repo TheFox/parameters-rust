@@ -8,4 +8,5 @@ cd "${SCRIPT_BASEDIR}/.."
 pwd
 
 set -x
-#cargo publish
+cargo publish --package parameters
+cargo publish --package parameters_lib

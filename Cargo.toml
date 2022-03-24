@@ -8,7 +8,7 @@ homepage = "https://github.com/TheFox/parameters-rust"
 documentation = "https://github.com/TheFox/parameters-rust"
 repository = "https://github.com/TheFox/parameters-rust"
 keywords = ["env", "variables", "deployment", "cicd"]
-categories = ["cli", "configuration"]
+categories = ["command-line-interface", "config", "filesystem", "parsing"]
 edition = "2021"
 default-run = "parameters"
 
