@@ -9,7 +9,7 @@ documentation = "https://github.com/TheFox/parameters-rust"
 repository = "https://github.com/TheFox/parameters-rust"
 keywords = ["env", "variables", "deployment", "cicd"]
 categories = ["command-line-interface", "config", "filesystem", "parsing"]
-edition = "2021"
+edition = "2018"
 default-run = "parameters"
 
 [dependencies]
