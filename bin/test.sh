@@ -6,6 +6,7 @@ export RUST_BACKTRACE=full
 which cargo &> /dev/null || { echo 'ERROR: cargo not found in PATH'; exit 1; }
 
 cd "${SCRIPT_BASEDIR}/.."
+source ./.env
 
 set -x
-cargo test --workspace -- --nocapture
+cargo test --workspace $* -- --nocapture

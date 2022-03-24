@@ -170,8 +170,8 @@ fn main() -> Result<()> {
         panic!("--regexp argument is required.");
     }
 
-    let parameters = Parameters::new(app.regexp.unwrap(), app.env_name, app.instance, app.search);
-    parameters.process_input(&input);
+    let parameters = Parameters::new(app.regexp.unwrap(), app.search, app.env_name, app.instance);
+    parameters.process(&input);
     
     #[cfg(debug_assertions)]
     println!("-> end");
