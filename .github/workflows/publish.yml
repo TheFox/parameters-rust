@@ -1,7 +1,7 @@
 name: Publish on Tag
 
 on:
-  push:
+  create:
     tags:
       - v*
 
