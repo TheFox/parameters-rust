@@ -4,21 +4,25 @@ use std::fs::read_to_string;
 use std::io::stdin;
 use std::io::BufRead;
 use std::io::Result;
+use std::fs::File;
+use std::io::prelude::*;
 use parameters_lib::app::App;
 use parameters_lib::parameters::Parameters;
 
-const APP_NAME: &'static str = env!("CARGO_PKG_NAME");
-const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const APP_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
-const APP_HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
+pub const APP_NAME: &'static str = env!("CARGO_PKG_NAME");
+pub const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
+pub const APP_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+pub const APP_HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
 
 #[cfg(debug_assertions)]
 const APP_BUILD_AT: &'static str = "APP_BUILD_AT";
 #[cfg(not(debug_assertions))]
+#[allow(dead_code)]
 const APP_BUILD_AT: &'static str = env!("APP_BUILD_AT");
 
+#[allow(dead_code)]
 fn print_app_info() {
-    println!("{} {} ({})", APP_NAME, APP_VERSION, APP_BUILD_AT);
+    println!("{} v{} ({})", APP_NAME, APP_VERSION, APP_BUILD_AT);
     println!("{}", APP_AUTHORS);
     println!("{}", APP_HOMEPAGE);
     println!("");
@@ -35,16 +39,13 @@ fn print_usage() {
     println!("  -e|--env|--environment <name>   Name of the Environment. For example: production");
     println!("  -n|--instance <name>            Name of the Instance. For example: instance1, or instance2.");
     println!("  -s|--search <string>            Search char for template variables. Default: @");
+    println!("  -H|--noheader                   Skip header.");
     // TODO: --quiet
     // println!("  -q|--quiet                      Do not throw an error if there are variables missing being replaced.");
-    // TODO: --noheader
-    // println!("  -H|--noheader                   Skip header.");
-    println!("");
+    println!();
 }
 
 fn main() -> Result<()> {
-    print_app_info();
-
     #[cfg(debug_assertions)]
     println!("-> start");
 
@@ -57,6 +58,7 @@ fn main() -> Result<()> {
     }
 
     if argc == 1 {
+        print_app_info();
         print_usage();
         return Ok(());
     }
@@ -76,10 +78,12 @@ fn main() -> Result<()> {
 
         match arg.as_str() {
             "-h" | "--help" => {
+                print_app_info();
                 print_usage();
                 return Ok(());
             },
             "-V" | "--version" => {
+                print_app_info();
                 print_usage();
                 return Ok(());
             },
@@ -123,11 +127,11 @@ fn main() -> Result<()> {
                     skip_next = true;
                 }
             },
-            "-q" | "--quiet" => {
-                app.is_quiet = true;
-            },
             "-H" | "--noheader" => {
                 app.no_header = true;
+            },
+            "-q" | "--quiet" => {
+                app.is_quiet = true;
             },
             _ => {
                 panic!("Unrecognized argument: {}", arg);
@@ -142,8 +146,8 @@ fn main() -> Result<()> {
         println!("-> app.env_name: {:?}", app.env_name);
         println!("-> app.instance: {:?}", app.instance);
         println!("-> app.search: {:?}", app.search);
-        println!("-> app.is_quiet: {:?}", app.is_quiet);
         println!("-> app.no_header: {:?}", app.no_header);
+        println!("-> app.is_quiet: {:?}", app.is_quiet);
     }
 
     let input: String = {
@@ -151,7 +155,7 @@ fn main() -> Result<()> {
             Some(_input_file_path) => {
                 // println!("-> _input_file_path: {}", _input_file_path);
                 if _input_file_path == "-" {
-                    println!("-> use stdin for input");
+                    // println!("-> use stdin for input");
                     let mut buffer = String::new();
                     let stdin = stdin();
                     let mut handle = stdin.lock();
@@ -170,11 +174,24 @@ fn main() -> Result<()> {
         panic!("--regexp argument is required.");
     }
 
-    let parameters = Parameters::new(app.regexp.unwrap(), app.search, app.env_name, app.instance);
-    parameters.process(&input);
+    let parameters = Parameters::new(app.regexp.unwrap(), app.search, app.env_name, app.instance, app.no_header);
+    let output = parameters.process(&input);
     
     #[cfg(debug_assertions)]
     println!("-> end");
+
+    if let Some(_output_file_path) = app.output_file_path {
+        // Write to file.
+        if _output_file_path == "-" {
+            print!("{}", output);
+        } else {
+            let mut file = File::create(_output_file_path)?;
+            file.write_all(output.as_bytes())?;
+        }
+    } else {
+        // Print
+        print!("{}", output);
+    }
 
     Ok(())
 }

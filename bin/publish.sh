@@ -8,5 +8,4 @@ cd "${SCRIPT_BASEDIR}/.."
 pwd
 
 set -x
-
-cargo publish
+#cargo publish

@@ -1,39 +1,47 @@
 
 use std::env::vars;
 use regex::Regex;
+use crate::APP_NAME;
+use crate::APP_VERSION;
+use crate::APP_BUILD_AT;
 use crate::types::Search;
 use crate::types::Environment;
 use crate::types::Instance;
 use crate::types::EnvsMap;
 
 pub struct Parameters {
-    // is_quiet: bool,
-    // no_header: bool,
     regexp: Regex,
     search: Search,
     env_name: Environment,
     instance: Instance,
+    no_header: bool,
+    // is_quiet: bool,
 }
 
 impl Parameters {
-    pub fn new(regexp: String, search: String, env_name: Environment, instance: Instance) -> Self {
-        println!("-> Parameters::new({}, {}, e={:?}, i={:?})", regexp, search, env_name, instance);
+    pub fn new(regexp: String, search: String, env_name: Environment, instance: Instance, no_header: bool) -> Self {
+        #[cfg(debug_assertions)]
+        println!("-> Parameters::new({}, {}, e={:?}, i={:?}, nh={})", regexp, search, env_name, instance, no_header);
+
         Self {
             regexp: Regex::new(&regexp).expect("Invalid regexp"),
             search: search,
             env_name: env_name,
             instance: instance,
+            no_header: no_header,
         }
     }
 
     pub fn process(&self, input: &String) -> String {
-        println!("-> Parameters::process()");
-        println!("-> input: '{}'", input); println!();
+        if cfg!(debug_assertions) {
+            println!("-> Parameters::process()");
+            println!("-> input: '{}'", input); println!();
+        }
+
         let mut output: String = String::from(input);
 
+        // Collect relevant environment variables.
         let mut env_vars: EnvsMap = EnvsMap::new();
-        // let mut black_list: Vec<String> = vec![];
-
         for (ename, evalue) in vars() {
             if self.regexp.is_match(&ename) {
                 env_vars.insert(ename, evalue);
@@ -41,6 +49,7 @@ impl Parameters {
         }
 
         for (ename, evalue) in env_vars.iter().rev() {
+            #[cfg(debug_assertions)]
             println!("-> var '{}': '{}'", ename, evalue);
 
             // Copy for mut.
@@ -48,52 +57,69 @@ impl Parameters {
 
             // Instance
             if let Some(_instance) = &self.instance {
-                // println!("  -> instance is some:  '{}'", _instance);
+                #[cfg(debug_assertions)]
+                println!("  -> instance is some:  '{}'", _instance);
 
                 let sub_instance = &enamec[(enamec.len() - _instance.len())..];
-                // println!("  -> sub instance: '{}'", sub_instance);
+
+                #[cfg(debug_assertions)]
+                println!("  -> sub instance: '{}'", sub_instance);
                 
                 if _instance == sub_instance {
                     let _end = enamec.len() - _instance.len() - 1;
                     enamec = String::from(&enamec[0.._end]);
-                    // println!("  -> new enamec: '{}'", enamec);
+
+                    #[cfg(debug_assertions)]
+                    println!("  -> new enamec: '{}'", enamec);
                 }
             }
 
             // Environment
             if let Some(_env_name) = &self.env_name {
+                #[cfg(debug_assertions)]
                 println!("  -> env is some: '{}'", _env_name);
 
                 let sub_env = &enamec[(enamec.len() - _env_name.len())..];
+
+                #[cfg(debug_assertions)]
                 println!("  -> sub env: '{}'", sub_env);
 
                 if _env_name == sub_env {
                     let _end = enamec.len() - _env_name.len() - 1;
                     enamec = String::from(&enamec[0.._end]);
+
+                    #[cfg(debug_assertions)]
                     println!("  -> new enamec: '{}'", enamec);
                 }
-            }
-
-            if let Some(_value) = env_vars.get(&enamec) {
-                println!("  -> {} => {:?}", enamec, _value);
-            } else {
-                // TODO: what can we do here?
-                panic!("variable '{}' not found in environment variables", enamec);
             }
 
             let mut tpl_var: String = String::from(&self.search);
             tpl_var.push_str(&enamec);
             tpl_var.push_str(&self.search);
 
+            #[cfg(debug_assertions)]
+            println!("  -> template variable: '{}'", tpl_var);
+
             output = output.replace(&tpl_var, &evalue);
 
-            println!("  -> output: '{}'", output);
-            println!();
+            if cfg!(debug_assertions) {
+                println!("  -> output: '{}'", output);
+                println!();
+            }
         }
 
-        println!();
-        println!("-> end output: '{}'", output);
-        output
+        if cfg!(debug_assertions) {
+            println!();
+            println!("-> end output: '{}'", output);
+        }
+
+        if self.no_header {
+            // Raw out
+            output
+        } else {
+            // Add header
+            "# Rendered by ".to_owned() + APP_NAME + " v" + APP_VERSION + " (" + APP_BUILD_AT + ")" + "\n\n" + &output
+        }
     }
 }
 
@@ -138,12 +164,12 @@ mod tests_parameters {
     use crate::types::Instance;
 
     #[test]
-    fn test_parameters0() {
+    fn test_parameters_single() {
         let regexp: String = "^SYMF_".into();
         let search: String = "@".into();
         let input: String = "DB_USER=_@SYMF_DB_USER@#".into();
 
-        let p1 = Parameters::new(regexp, search, None, None);
+        let p1 = Parameters::new(regexp, search, None, None, true);
         assert_eq!("DB_USER=_user1#", p1.process(&input));
     }
 
@@ -170,6 +196,7 @@ mod tests_parameters {
 
             // Non-existing
             ("^SYMF_", "@", "DB_PASS=/@SYMF_XYZ@/", "DB_PASS=/@SYMF_XYZ@/"),
+            ("^TEST_", "@", "DB_PASS=/@SYMF_DB_USER@/", "DB_PASS=/@SYMF_DB_USER@/"),
         ];
         
         for _t in _data {
@@ -177,7 +204,7 @@ mod tests_parameters {
             let search: Search = _t.1.into();
             let input: String = _t.2.into();
 
-            let p1 = Parameters::new(regexp, search, None, None);
+            let p1 = Parameters::new(regexp, search, None, None, true);
             assert_eq!(_t.3, p1.process(&input));
         }
     }
@@ -198,6 +225,10 @@ mod tests_parameters {
 
             // Non-existing Environment
             ("^SYMF_", "@", "ABC", "DB_PASS=@SYMF_DB_PASS_XYZ@", "DB_PASS=@SYMF_DB_PASS_XYZ@"),
+
+            // No fall-back
+            ("^SYMF_", "@", "PRODUCTION", "DB_NAME=@SYMF_DB_NAME@", "DB_NAME=password5b"),
+            ("^SYMF_", "@", "ABC", "DB_NAME=@SYMF_DB_NAME@", "DB_NAME=@SYMF_DB_NAME@"),
         ];
         
         for _t in _data {
@@ -206,7 +237,7 @@ mod tests_parameters {
             let env_name: Environment = Some(_t.2.into());
             let input: String = _t.3.into();
 
-            let p1 = Parameters::new(regexp, search, env_name, None);
+            let p1 = Parameters::new(regexp, search, env_name, None, true);
             assert_eq!(_t.4, p1.process(&input));
         }
     }
@@ -237,7 +268,7 @@ mod tests_parameters {
             let instance: Instance = Some(_t.3.into());
             let input: String = _t.4.into();
 
-            let p1 = Parameters::new(regexp, search, env_name, instance);
+            let p1 = Parameters::new(regexp, search, env_name, instance, true);
             assert_eq!(_t.5, p1.process(&input));
         }
     }
