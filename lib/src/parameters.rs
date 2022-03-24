@@ -1,11 +1,10 @@
 
 use std::env::vars;
 use regex::Regex;
-use std::collections::BTreeMap;
 use crate::types::Search;
 use crate::types::Environment;
 use crate::types::Instance;
-use crate::app::App;
+use crate::types::EnvsMap;
 
 pub struct Parameters {
     // is_quiet: bool,
@@ -32,7 +31,7 @@ impl Parameters {
         println!("-> input: '{}'", input); println!();
         let mut output: String = String::from(input);
 
-        let mut env_vars: BTreeMap<String, String> = BTreeMap::new();
+        let mut env_vars: EnvsMap = EnvsMap::new();
         // let mut black_list: Vec<String> = vec![];
 
         for (ename, evalue) in vars() {
@@ -154,6 +153,7 @@ mod tests_parameters {
     #[test]
     fn test_parameters_basic() {
         let _data: Vec<BasicDto> = vec![
+            // Variable
             ("^SYMF_", "@", "DB_USER=@SYMF_DB_USER@", "DB_USER=user1"),
             ("^SYMF_", "@", "DB_USER=_@SYMF_DB_USER@#", "DB_USER=_user1#"),
             ("^SYMF_", "@", "DB_USER=/@SYMF_DB_USER@/", "DB_USER=/user1/"),
@@ -162,7 +162,13 @@ mod tests_parameters {
             ("^SYMF_", "@", "DB_PASS=_B_@SYMF_DB_PASS@_E_", "DB_PASS=_B_password1_E_"),
             ("^SYMF_", "@", "DB_PASS=/@SYMF_DB_PASS@/@SYMF_DB_PASS@/", "DB_PASS=/password1/password1/"),
 
-            // Non-machting
+            // Exact Environment
+            ("^SYMF_", "@", "DB_PASS1=@SYMF_DB_PASS@/DB_PASS2=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS1=password1/DB_PASS2=password2"),
+
+            // Exact Instance
+            ("^SYMF_", "@", "DB_PASS1=@SYMF_DB_PASS@/DB_PASS2=@SYMF_DB_PASS_PRODUCTION@/DB_PASS3=@SYMF_DB_PASS_PRODUCTION_INSTANCE1@", "DB_PASS1=password1/DB_PASS2=password2/DB_PASS3=password3"),
+
+            // Non-existing
             ("^SYMF_", "@", "DB_PASS=/@SYMF_XYZ@/", "DB_PASS=/@SYMF_XYZ@/"),
         ];
         
@@ -181,13 +187,17 @@ mod tests_parameters {
     #[test]
     fn test_parameters_environment() {
         let _data: Vec<EnvDto> = vec![
-            ("^SYMF_", "@", "PRODUCTION", "DB_PASS=@SYMF_DB_PASS@",            "DB_PASS=password2"),
+            // Environment
+            ("^SYMF_", "@", "PRODUCTION", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password2"),
+
+            // Fall-back to basic Variable
+            ("^SYMF_", "@", "ABC", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS=password2"),
 
             // Non-machting Environment
-            ("^SYMF_", "@", "___DUCTION", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS=password2"),
+            ("^SYMF_", "@", "ABC", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password1"),
 
             // Non-existing Environment
-            ("^SYMF_", "@", "ABC",        "DB_PASS=@SYMF_DB_PASS_XYZ@",        "DB_PASS=@SYMF_DB_PASS_XYZ@"),
+            ("^SYMF_", "@", "ABC", "DB_PASS=@SYMF_DB_PASS_XYZ@", "DB_PASS=@SYMF_DB_PASS_XYZ@"),
         ];
         
         for _t in _data {
@@ -206,15 +216,18 @@ mod tests_parameters {
     #[test]
     fn test_parameters_instance() {
         let _data: Vec<InstanceDto> = vec![
+            // Instance
             ("^SYMF_", "@", "PRODUCTION", "INSTANCE1", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password3"),
             ("^SYMF_", "@", "PRODUCTION", "INSTANCE2", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password4"),
             
             // Non-machting Instance
-            ("^SYMF_", "@", "PRODUCTION", "__TANCE1", "DB_PASS=@SYMF_DB_PASS_PRODUCTION_INSTANCE1@", "DB_PASS=password3"),
-            ("^SYMF_", "@", "PRODUCTION", "__TANCE1", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@"),
+            ("^SYMF_", "@", "PRODUCTION", "ABC", "DB_PASS=@SYMF_DB_PASS_PRODUCTION_INSTANCE1@", "DB_PASS=password3"),
             
             // Fall-back to Environment
-            ("^SYMF_", "@", "PRODUCTION", "__TANCE1", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password2"),
+            ("^SYMF_", "@", "PRODUCTION", "ABC", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password2"),
+
+            // Non-existing Instance
+            ("^SYMF_", "@", "PRODUCTION", "ABC", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@"),
         ];
         
         for _t in _data {
