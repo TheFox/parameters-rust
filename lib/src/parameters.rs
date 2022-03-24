@@ -2,19 +2,22 @@
 use std::env::vars;
 use regex::Regex;
 use std::collections::BTreeMap;
+use crate::types::Search;
+use crate::types::Environment;
+use crate::types::Instance;
 use crate::app::App;
 
 pub struct Parameters {
     // is_quiet: bool,
     // no_header: bool,
     regexp: Regex,
-    search: String,
-    env_name: Option<String>,
-    instance: Option<String>,
+    search: Search,
+    env_name: Environment,
+    instance: Instance,
 }
 
 impl Parameters {
-    pub fn new(regexp: String, search: String, env_name: Option<String>, instance: Option<String>) -> Self {
+    pub fn new(regexp: String, search: String, env_name: Environment, instance: Instance) -> Self {
         println!("-> Parameters::new({}, {}, e={:?}, i={:?})", regexp, search, env_name, instance);
         Self {
             regexp: Regex::new(&regexp).expect("Invalid regexp"),
@@ -30,6 +33,7 @@ impl Parameters {
         let mut output: String = String::from(input);
 
         let mut env_vars: BTreeMap<String, String> = BTreeMap::new();
+        // let mut black_list: Vec<String> = vec![];
 
         for (ename, evalue) in vars() {
             if self.regexp.is_match(&ename) {
@@ -59,20 +63,20 @@ impl Parameters {
 
             // Environment
             if let Some(_env_name) = &self.env_name {
-                // println!("  -> env is some: '{}'", _env_name);
+                println!("  -> env is some: '{}'", _env_name);
 
                 let sub_env = &enamec[(enamec.len() - _env_name.len())..];
-                // println!("  -> sub env: '{}'", sub_env);
+                println!("  -> sub env: '{}'", sub_env);
 
                 if _env_name == sub_env {
                     let _end = enamec.len() - _env_name.len() - 1;
                     enamec = String::from(&enamec[0.._end]);
-                    // println!("  -> new enamec: '{}'", enamec);
+                    println!("  -> new enamec: '{}'", enamec);
                 }
             }
 
             if let Some(_value) = env_vars.get(&enamec) {
-                // println!("  -> {} => {:?}", enamec, _value);
+                println!("  -> {} => {:?}", enamec, _value);
             } else {
                 // TODO: what can we do here?
                 panic!("variable '{}' not found in environment variables", enamec);
@@ -84,11 +88,12 @@ impl Parameters {
 
             output = output.replace(&tpl_var, &evalue);
 
-            // println!();
+            println!("  -> output: '{}'", output);
+            println!();
         }
 
         println!();
-        println!("-> output: '{}'", output);
+        println!("-> end output: '{}'", output);
         output
     }
 }
@@ -129,6 +134,9 @@ mod tests_sub_string {
 #[cfg(test)]
 mod tests_parameters {
     use super::Parameters;
+    use crate::types::Search;
+    use crate::types::Environment;
+    use crate::types::Instance;
 
     #[test]
     fn test_parameters0() {
@@ -153,11 +161,14 @@ mod tests_parameters {
             ("^SYMF_", "@", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password1"),
             ("^SYMF_", "@", "DB_PASS=_B_@SYMF_DB_PASS@_E_", "DB_PASS=_B_password1_E_"),
             ("^SYMF_", "@", "DB_PASS=/@SYMF_DB_PASS@/@SYMF_DB_PASS@/", "DB_PASS=/password1/password1/"),
+
+            // Non-machting
+            ("^SYMF_", "@", "DB_PASS=/@SYMF_XYZ@/", "DB_PASS=/@SYMF_XYZ@/"),
         ];
         
         for _t in _data {
             let regexp: String = _t.0.into();
-            let search: String = _t.1.into();
+            let search: Search = _t.1.into();
             let input: String = _t.2.into();
 
             let p1 = Parameters::new(regexp, search, None, None);
@@ -170,18 +181,51 @@ mod tests_parameters {
     #[test]
     fn test_parameters_environment() {
         let _data: Vec<EnvDto> = vec![
-            // ("^SYMF_", "@", "production", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password1"),
-            ("^SYMF_", "@", "_roduction", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS=password2"),
+            ("^SYMF_", "@", "PRODUCTION", "DB_PASS=@SYMF_DB_PASS@",            "DB_PASS=password2"),
+
+            // Non-machting Environment
+            ("^SYMF_", "@", "___DUCTION", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS=password2"),
+
+            // Non-existing Environment
+            ("^SYMF_", "@", "ABC",        "DB_PASS=@SYMF_DB_PASS_XYZ@",        "DB_PASS=@SYMF_DB_PASS_XYZ@"),
         ];
         
         for _t in _data {
             let regexp: String = _t.0.into();
-            let search: String = _t.1.into();
-            let env_name: Option<String> = Some(_t.2.into());
+            let search: Search = _t.1.into();
+            let env_name: Environment = Some(_t.2.into());
             let input: String = _t.3.into();
 
             let p1 = Parameters::new(regexp, search, env_name, None);
             assert_eq!(_t.4, p1.process(&input));
+        }
+    }
+
+    type InstanceDto = (SS, SS, SS, SS, SS, SS);
+
+    #[test]
+    fn test_parameters_instance() {
+        let _data: Vec<InstanceDto> = vec![
+            ("^SYMF_", "@", "PRODUCTION", "INSTANCE1", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password3"),
+            ("^SYMF_", "@", "PRODUCTION", "INSTANCE2", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password4"),
+            
+            // Non-machting Instance
+            ("^SYMF_", "@", "PRODUCTION", "__TANCE1", "DB_PASS=@SYMF_DB_PASS_PRODUCTION_INSTANCE1@", "DB_PASS=password3"),
+            ("^SYMF_", "@", "PRODUCTION", "__TANCE1", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@"),
+            
+            // Fall-back to Environment
+            ("^SYMF_", "@", "PRODUCTION", "__TANCE1", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password2"),
+        ];
+        
+        for _t in _data {
+            let regexp: String = _t.0.into();
+            let search: Search = _t.1.into();
+            let env_name: Environment = Some(_t.2.into());
+            let instance: Instance = Some(_t.3.into());
+            let input: String = _t.4.into();
+
+            let p1 = Parameters::new(regexp, search, env_name, instance);
+            assert_eq!(_t.5, p1.process(&input));
         }
     }
 }
