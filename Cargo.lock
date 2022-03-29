@@ -63,7 +63,7 @@ dependencies = [
 
 [[package]]
 name = "parameters"
-version = "0.2.0-dev"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "parameters_lib",
@@ -71,7 +71,7 @@ dependencies = [
 
 [[package]]
 name = "parameters_lib"
-version = "0.2.0-dev"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "regex",
