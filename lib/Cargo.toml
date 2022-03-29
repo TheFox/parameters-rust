@@ -1,7 +1,7 @@
 [package]
 name = "parameters_lib"
-description = "Library"
-version = "0.2.1"
+description = "Parameters Library"
+version = "0.2.2"
 license = "MIT"
 authors = ["Christian Mayer <christian@fox21.at>"]
 homepage = "https://github.com/TheFox/parameters-rust"
@@ -12,8 +12,8 @@ categories = ["command-line-interface", "config", "filesystem", "parsing"]
 edition = "2018"
 
 [build-dependencies]
-chrono = "~0.4.0"
+chrono = "0.4"
 
 [dependencies]
-regex = "~1.5.0"
-chrono = "~0.4.0"
+regex = "1.5"
+chrono = "0.4"
