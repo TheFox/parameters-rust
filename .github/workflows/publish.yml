@@ -14,9 +14,7 @@ jobs:
         run: cargo build --verbose
       - name: Run tests
         run: cargo test --verbose
-      - name: Cargo Login
+      - name: Cargo Publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo login
-      - name: Cargo Publish
         run: ./bin/publish.sh
