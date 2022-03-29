@@ -10,6 +10,8 @@ pwd
 git status
 git diff
 
-set -x
-cargo publish --allow-dirty --package parameters_lib
-cargo publish --allow-dirty --package parameters
+pushd lib &> /dev/null
+cargo publish
+popd &> /dev/null
+
+cargo publish
