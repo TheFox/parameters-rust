@@ -11,6 +11,12 @@ The project outlines as described in my blog post about [Open Source Software Co
 
 TODO
 
+## Installation
+
+```bash
+cargo install parameters
+```
+
 ## Similar projects
 
 - [Parameters written in C++](https://github.com/TheFox/parameters)
@@ -19,5 +25,6 @@ TODO
 
 ```bash
 ./bin/dev.sh -i ./.env.dist -o ./.env.production -e production -n instance1 -r SYMF_ -s @
+./bin/dev.sh -i ./.env.dist -r ^
 echo -n hello | ./bin/dev.sh -i - -o ./.env.production -e production -n instance1 -r ^SYMF_ -s @
 ```

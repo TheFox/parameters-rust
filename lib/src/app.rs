@@ -16,7 +16,7 @@ impl App {
         Self {
             input_file_path: None,
             output_file_path: None,
-            regexp: None,
+            regexp: Some(String::from("^")),
             env_name: None,
             instance: None,
             search: String::from("@"),

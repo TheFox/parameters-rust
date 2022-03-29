@@ -1,4 +1,6 @@
 
+include!(concat!(env!("OUT_DIR"), "/config.rs"));
+
 use std::env::args;
 use std::fs::read_to_string;
 use std::io::stdin;
@@ -9,22 +11,12 @@ use std::io::prelude::*;
 use parameters_lib::app::App;
 use parameters_lib::parameters::Parameters;
 
-pub const APP_NAME: &'static str = env!("CARGO_PKG_NAME");
-pub const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
-pub const APP_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
-pub const APP_HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
-
-#[cfg(debug_assertions)]
-const APP_BUILD_AT: &'static str = "APP_BUILD_AT";
-#[cfg(not(debug_assertions))]
-#[allow(dead_code)]
-const APP_BUILD_AT: &'static str = env!("APP_BUILD_AT");
-
 #[allow(dead_code)]
 fn print_app_info() {
     println!("{} v{} ({})", APP_NAME, APP_VERSION, APP_BUILD_AT);
     println!("{}", APP_AUTHORS);
     println!("{}", APP_HOMEPAGE);
+    println!("OUT_DIR: {}", env!("OUT_DIR"));
     println!("");
 }
 
@@ -35,7 +27,7 @@ fn print_usage() {
     println!("  -h|--help                       Show help.");
     println!("  -i|--input <input_file>         Input path to template file or '-' for STDIN. (required)");
     println!("  -o|--output <output_file>       Output file path. Default: STDOUT");
-    println!("  -r|--regexp <regexp>            Search regular expression for environment variable names. (required)");
+    println!("  -r|--regexp <regexp>            Search regular expression in environment variable names.");
     println!("  -e|--env|--environment <name>   Name of the Environment. For example: production");
     println!("  -n|--instance <name>            Name of the Instance. For example: instance1, or instance2.");
     println!("  -s|--search <string>            Search char for template variables. Default: @");
@@ -166,17 +158,13 @@ fn main() -> Result<()> {
                         .expect("Cannot read file")
                 }
             },
-            None => panic!("--input argument is required."),
+            None => String::from("# No --input defined for parameters\n"),
         }
     };
 
-    if app.regexp.is_none() {
-        panic!("--regexp argument is required.");
-    }
-
     let parameters = Parameters::new(app.regexp.unwrap(), app.search, app.env_name, app.instance, app.no_header);
     let output = parameters.process(&input);
-    
+
     #[cfg(debug_assertions)]
     println!("-> end");
 

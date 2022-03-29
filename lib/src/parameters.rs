@@ -1,9 +1,9 @@
 
+include!(concat!(env!("OUT_DIR"), "/config.rs"));
+
 use std::env::vars;
 use regex::Regex;
-use crate::APP_NAME;
-use crate::APP_VERSION;
-use crate::APP_BUILD_AT;
+
 use crate::types::Search;
 use crate::types::Environment;
 use crate::types::Instance;
@@ -64,7 +64,7 @@ impl Parameters {
 
                 #[cfg(debug_assertions)]
                 println!("  -> sub instance: '{}'", sub_instance);
-                
+
                 if _instance == sub_instance {
                     let _end = enamec.len() - _instance.len() - 1;
                     enamec = String::from(&enamec[0.._end]);
@@ -118,7 +118,7 @@ impl Parameters {
             output
         } else {
             // Add header
-            "# Rendered by ".to_owned() + APP_NAME + " v" + APP_VERSION + " (" + APP_BUILD_AT + ")" + "\n\n" + &output
+            format!("# Rendered by {} v{} @ {}\n\n{}", APP_NAME, APP_VERSION, chrono::Local::now().format("%Y-%m-%d %H:%M:%S %Z"), output)
         }
     }
 }
@@ -198,7 +198,7 @@ mod tests_parameters {
             ("^SYMF_", "@", "DB_PASS=/@SYMF_XYZ@/", "DB_PASS=/@SYMF_XYZ@/"),
             ("^TEST_", "@", "DB_PASS=/@SYMF_DB_USER@/", "DB_PASS=/@SYMF_DB_USER@/"),
         ];
-        
+
         for _t in _data {
             let regexp: String = _t.0.into();
             let search: Search = _t.1.into();
@@ -230,7 +230,7 @@ mod tests_parameters {
             ("^SYMF_", "@", "PRODUCTION", "DB_NAME=@SYMF_DB_NAME@", "DB_NAME=password5b"),
             ("^SYMF_", "@", "ABC", "DB_NAME=@SYMF_DB_NAME@", "DB_NAME=@SYMF_DB_NAME@"),
         ];
-        
+
         for _t in _data {
             let regexp: String = _t.0.into();
             let search: Search = _t.1.into();
@@ -250,17 +250,17 @@ mod tests_parameters {
             // Instance
             ("^SYMF_", "@", "PRODUCTION", "INSTANCE1", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password3"),
             ("^SYMF_", "@", "PRODUCTION", "INSTANCE2", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password4"),
-            
+
             // Non-machting Instance
             ("^SYMF_", "@", "PRODUCTION", "ABC", "DB_PASS=@SYMF_DB_PASS_PRODUCTION_INSTANCE1@", "DB_PASS=password3"),
-            
+
             // Fall-back to Environment
             ("^SYMF_", "@", "PRODUCTION", "ABC", "DB_PASS=@SYMF_DB_PASS@", "DB_PASS=password2"),
 
             // Non-existing Instance
             ("^SYMF_", "@", "PRODUCTION", "ABC", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@", "DB_PASS=@SYMF_DB_PASS_PRODUCTION@"),
         ];
-        
+
         for _t in _data {
             let regexp: String = _t.0.into();
             let search: Search = _t.1.into();
