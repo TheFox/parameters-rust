@@ -8,8 +8,11 @@ use std::io::BufRead;
 use std::io::Result;
 use std::fs::File;
 use std::io::prelude::*;
-use parameters_lib::app::App;
+//use parameters_lib::app::App;
 use parameters_lib::parameters::Parameters;
+
+mod app;
+use crate::app::App;
 
 #[allow(dead_code)]
 fn print_app_info() {
