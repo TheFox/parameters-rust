@@ -15,7 +15,6 @@ pub struct Parameters {
     env_name: Environment,
     instance: Instance,
     no_header: bool,
-    // is_quiet: bool,
 }
 
 impl Parameters {

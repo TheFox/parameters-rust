@@ -6,9 +6,8 @@ use std::fs::read_to_string;
 use std::io::stdin;
 use std::io::BufRead;
 use std::io::Result;
+use std::io::Write;
 use std::fs::File;
-use std::io::prelude::*;
-//use parameters_lib::app::App;
 use parameters_lib::parameters::Parameters;
 
 mod app;
@@ -19,7 +18,6 @@ fn print_app_info() {
     println!("{} v{} ({})", APP_NAME, APP_VERSION, APP_BUILD_AT);
     println!("{}", APP_AUTHORS);
     println!("{}", APP_HOMEPAGE);
-    println!("OUT_DIR: {}", env!("OUT_DIR"));
     println!("");
 }
 
@@ -35,8 +33,6 @@ fn print_usage() {
     println!("  -n|--instance <name>            Name of the Instance. For example: instance1, or instance2.");
     println!("  -s|--search <string>            Search char for template variables. Default: @");
     println!("  -H|--noheader                   Skip header.");
-    // TODO: --quiet
-    // println!("  -q|--quiet                      Do not throw an error if there are variables missing being replaced.");
     println!();
 }
 
@@ -125,9 +121,6 @@ fn main() -> Result<()> {
             "-H" | "--noheader" => {
                 app.no_header = true;
             },
-            "-q" | "--quiet" => {
-                app.is_quiet = true;
-            },
             _ => {
                 panic!("Unrecognized argument: {}", arg);
             },
@@ -142,15 +135,12 @@ fn main() -> Result<()> {
         println!("-> app.instance: {:?}", app.instance);
         println!("-> app.search: {:?}", app.search);
         println!("-> app.no_header: {:?}", app.no_header);
-        println!("-> app.is_quiet: {:?}", app.is_quiet);
     }
 
     let input: String = {
         match app.input_file_path {
             Some(_input_file_path) => {
-                // println!("-> _input_file_path: {}", _input_file_path);
                 if _input_file_path == "-" {
-                    // println!("-> use stdin for input");
                     let mut buffer = String::new();
                     let stdin = stdin();
                     let mut handle = stdin.lock();

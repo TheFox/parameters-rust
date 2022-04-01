@@ -7,7 +7,6 @@ pub struct App {
     pub env_name: Option<String>,
     pub instance: Option<String>,
     pub search: String,
-    pub is_quiet: bool,
     pub no_header: bool,
 }
 
@@ -20,7 +19,6 @@ impl App {
             env_name: None,
             instance: None,
             search: String::from("@"),
-            is_quiet: false,
             no_header: false,
         }
     }
