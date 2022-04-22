@@ -19,8 +19,8 @@ pub struct Parameters {
 
 impl Parameters {
     pub fn new(regexp: String, search: String, env_name: Environment, instance: Instance, no_header: bool) -> Self {
-        #[cfg(debug_assertions)]
-        println!("-> Parameters::new({}, {}, e={:?}, i={:?}, nh={})", regexp, search, env_name, instance, no_header);
+        // #[cfg(debug_assertions)]
+        // println!("-> Parameters::new({}, {}, e={:?}, i={:?}, nh={})", regexp, search, env_name, instance, no_header);
 
         Self {
             regexp: Regex::new(&regexp).expect("Invalid regexp"),
@@ -32,10 +32,10 @@ impl Parameters {
     }
 
     pub fn process(&self, input: &String) -> String {
-        if cfg!(debug_assertions) {
-            println!("-> Parameters::process()");
-            println!("-> input: '{}'", input); println!();
-        }
+        // if cfg!(debug_assertions) {
+        //     println!("-> Parameters::process()");
+        //     println!("-> input: '{}'", input); println!();
+        // }
 
         let mut output: String = String::from(input);
 
@@ -48,47 +48,47 @@ impl Parameters {
         }
 
         for (ename, evalue) in env_vars.iter().rev() {
-            #[cfg(debug_assertions)]
-            println!("-> var '{}': '{}'", ename, evalue);
+            // #[cfg(debug_assertions)]
+            // println!("-> var '{}': '{}'", ename, evalue);
 
             // Copy for mut.
             let mut enamec = String::from(ename);
 
             // Instance
             if let Some(_instance) = &self.instance {
-                #[cfg(debug_assertions)]
-                println!("  -> instance is some:  '{}'", _instance);
+                // #[cfg(debug_assertions)]
+                // println!("  -> instance is some:  '{}'", _instance);
 
                 let sub_instance = &enamec[(enamec.len() - _instance.len())..];
 
-                #[cfg(debug_assertions)]
-                println!("  -> sub instance: '{}'", sub_instance);
+                // #[cfg(debug_assertions)]
+                // println!("  -> sub instance: '{}'", sub_instance);
 
                 if _instance == sub_instance {
                     let _end = enamec.len() - _instance.len() - 1;
                     enamec = String::from(&enamec[0.._end]);
 
-                    #[cfg(debug_assertions)]
-                    println!("  -> new enamec: '{}'", enamec);
+                    // #[cfg(debug_assertions)]
+                    // println!("  -> new enamec: '{}'", enamec);
                 }
             }
 
             // Environment
             if let Some(_env_name) = &self.env_name {
-                #[cfg(debug_assertions)]
-                println!("  -> env is some: '{}'", _env_name);
+                // #[cfg(debug_assertions)]
+                // println!("  -> env is some: '{}'", _env_name);
 
                 let sub_env = &enamec[(enamec.len() - _env_name.len())..];
 
-                #[cfg(debug_assertions)]
-                println!("  -> sub env: '{}'", sub_env);
+                // #[cfg(debug_assertions)]
+                // println!("  -> sub env: '{}'", sub_env);
 
                 if _env_name == sub_env {
                     let _end = enamec.len() - _env_name.len() - 1;
                     enamec = String::from(&enamec[0.._end]);
 
-                    #[cfg(debug_assertions)]
-                    println!("  -> new enamec: '{}'", enamec);
+                    // #[cfg(debug_assertions)]
+                    // println!("  -> new enamec: '{}'", enamec);
                 }
             }
 
@@ -96,21 +96,21 @@ impl Parameters {
             tpl_var.push_str(&enamec);
             tpl_var.push_str(&self.search);
 
-            #[cfg(debug_assertions)]
-            println!("  -> template variable: '{}'", tpl_var);
+            // #[cfg(debug_assertions)]
+            // println!("  -> template variable: '{}'", tpl_var);
 
             output = output.replace(&tpl_var, &evalue);
 
-            if cfg!(debug_assertions) {
-                println!("  -> output: '{}'", output);
-                println!();
-            }
+            // if cfg!(debug_assertions) {
+            //     println!("  -> output: '{}'", output);
+            //     println!();
+            // }
         }
 
-        if cfg!(debug_assertions) {
-            println!();
-            println!("-> end output: '{}'", output);
-        }
+        // if cfg!(debug_assertions) {
+        //     println!();
+        //     println!("-> end output: '{}'", output);
+        // }
 
         if self.no_header {
             // Raw out
