@@ -4,8 +4,8 @@
 
 The project outlines as described in my blog post about [Open Source Software Collaboration](https://blog.fox21.at/2019/02/21/open-source-software-collaboration.html).
 
-- The main purpose of this software is to handle one template file and generate another file out of that. This is used for CI/CD pipelines, where a .env.dist file is taken to generate a .env file for production environment.
-- This list is open. Feel free to request features.
+- The main purpose of this software is to handle one template file and generate another file out of that. This is used for CI/CD pipelines. A .env.dist template file is taken to generate a .env file for a specific environment.
+- This list is open. Although the features are nearly defined, feel free to request features.
 
 ## Examples
 
